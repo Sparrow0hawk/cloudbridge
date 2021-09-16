@@ -825,7 +825,7 @@ class AzureInstanceService(BaseInstanceService):
               priority=BaseInstanceService.STANDARD_EVENT_PRIORITY)
     def create(self, label, image, vm_type, subnet,
                key_pair=None, vm_firewalls=None, user_data=None,
-               launch_config=None, **kwargs):
+               launch_config=None, public_ip=False, **kwargs):
         AzureInstance.assert_valid_resource_label(label)
         instance_name = AzureInstance._generate_name_from_label(label,
                                                                 "cb-ins")
@@ -865,6 +865,20 @@ class AzureInstanceService(BaseInstanceService):
             }]
         }
 
+        if public_ip:
+            ip_address_result  = self.provider.azure_client.create_floating_ip(
+                instance_name + '_fip',
+                {
+                    'location': self.provider.region_name,
+                    "sku": { "name": "Basic" },
+                    "public_ip_allocation_method": "Dynamic",
+                    "public_ip_address_version" : "IPV4"
+                }
+            )
+            nic_params['ip_configurations'][0]['public_ip_address'] = {
+                    'id': ip_address_result.id
+                }
+            
         if vm_firewall_id:
             nic_params['network_security_group'] = {
                 'id': vm_firewall_id
