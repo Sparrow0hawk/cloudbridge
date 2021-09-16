@@ -69,3 +69,6 @@ run_nose.py
 
 # PyCharm
 .idea/
+
+.env
+*.pem
